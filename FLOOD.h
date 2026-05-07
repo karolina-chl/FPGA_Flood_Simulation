@@ -93,11 +93,11 @@ typedef struct {
 } Cloud_t;
 
 struct parameters {
-    float *ground;
+    float ground[NROWS*NCOLS];
     float threshold;
     int num_minutes;
     float ex_factor;
-    Cloud_t *clouds;
+    Cloud_t clouds[NCLOUDS];
 };
 
 struct results {
@@ -112,6 +112,6 @@ struct results {
     long total_rain;
 };
 
-void do_compute(struct parameters *p, struct results *r);
+void do_compute(struct parameters p, struct results &r);
 
 #endif
