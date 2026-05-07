@@ -67,3 +67,7 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+
+# remove results files 
+FLOOD_HLS_base/
+FLOOD_HLS_optimized/
