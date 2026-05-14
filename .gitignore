@@ -76,3 +76,6 @@ FLOOD_HLS_base_tiny_mountains/
 FLOOD_HLS_base_tiny_dam/
 FLOOD_HLS_base_small_mountains/
 FLOOD_HLS_base_small_dam/
+
+# IDE
+.idea/
