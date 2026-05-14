@@ -41,17 +41,24 @@ for test_name in "${!TESTS[@]}"; do
     missing_files=""
     [[ -f "$cpu_out" ]]  || missing_files+="  - CPU output: $cpu_out\n"
     [[ -f "$csim_out" ]] || missing_files+="  - CSIM output: $csim_out\n"
-    [[ -f "$rtl_out" ]]  || missing_files+="  - RTL output: $rtl_out\n"
     if [[ -n "$missing_files" ]]; then
-        echo -e "SKIPPING: ${test_name} due to missing files:\n${missing_files}"
+        echo -e "SKIPPING C-Simulation: ${test_name} \n due to missing files:\n${missing_files}"
         continue
     fi
 
     echo "Running C-Simulation: ${test_name}"
     python3 "$CHECK_SCRIPT" "$cpu_out" "$csim_out"
-    echo "C-Simulation: ${test_name} DONE"
+    echo "C-Simulation: ${test_name} COMPLETED"
+
+    missing_files=""
+    [[ -f "$cpu_out" ]]  || missing_files+="  - CPU output: $cpu_out\n"
+    [[ -f "$rtl_out" ]]  || missing_files+="  - RTL output: $rtl_out\n"
+    if [[ -n "$missing_files" ]]; then
+        echo -e "SKIPPING RTL Co-simulation: ${test_name} \n due to missing files:\n${missing_files}"
+        continue
+    fi
 
     echo "Running RTL Co-simulation: ${test_name}"
     python3 "$CHECK_SCRIPT" "$cpu_out" "$rtl_out"
-    echo "RTL Co-simulation: ${test_name} DONE"
+    echo "RTL Co-simulation: ${test_name} COMPLETED"
 done
