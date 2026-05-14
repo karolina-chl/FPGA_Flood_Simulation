@@ -37,8 +37,13 @@ for test_name in "${!TESTS[@]}"; do
     echo "========================================"
 
     IFS='|' read -r cpu_out csim_out rtl_out <<< "${TESTS[$test_name]}"
-    if [[ ! -f "$cpu_out" ]] || [[ ! -f "$csim_out" ]] || [[ ! -f "$rtl_out" ]]; then
-        echo "SKIPPING: ${test_name} (One or more files missing)"
+
+    missing_files=""
+    [[ -f "$cpu_out" ]]  || missing_files+="  - CPU output: $cpu_out\n"
+    [[ -f "$csim_out" ]] || missing_files+="  - CSIM output: $csim_out\n"
+    [[ -f "$rtl_out" ]]  || missing_files+="  - RTL output: $rtl_out\n"
+    if [[ -n "$missing_files" ]]; then
+        echo -e "SKIPPING: ${test_name} due to missing files:\n${missing_files}"
         continue
     fi
 
