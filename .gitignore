@@ -79,3 +79,6 @@ FLOOD_HLS_base_tiny_mountains_pipelined/
 FLOOD_HLS_base_tiny_dam_pipelined/
 FLOOD_HLS_base_small_mountains_pipelined/
 FLOOD_HLS_base_small_dam_pipelined/
+
+# IDE
+.idea/
