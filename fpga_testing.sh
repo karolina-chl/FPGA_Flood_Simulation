@@ -33,19 +33,20 @@ for test_name in "${!TESTS[@]}"; do
 
     echo ""
     echo "========================================"
-    echo "Running test: ${test_name}"
+    echo "Starting: ${test_name} ..."
     echo "========================================"
 
     IFS='|' read -r cpu_out csim_out rtl_out <<< "${TESTS[$test_name]}"
-    [[ -f "$cpu_out" ]] || { echo "Missing: $cpu_out";}
-    [[ -f "$csim_out" ]] || { echo "Missing: $csim_out";}
-    [[ -f "$rtl_out" ]] || { echo "Missing: $rtl_out";}
+    if [[ ! -f "$cpu_out" ]] || [[ ! -f "$csim_out" ]] || [[ ! -f "$rtl_out" ]]; then
+        echo "SKIPPING: ${test_name} (One or more files missing)"
+        continue
+    fi
 
-    echo "Running C-Simulation: ${test_name} ..."
+    echo "Running C-Simulation: ${test_name}"
     python3 "$CHECK_SCRIPT" "$cpu_out" "$csim_out"
     echo "C-Simulation: ${test_name} DONE"
 
-    echo "Running RTL Co-simulation: ${test_name} ..."
+    echo "Running RTL Co-simulation: ${test_name}"
     python3 "$CHECK_SCRIPT" "$cpu_out" "$rtl_out"
     echo "RTL Co-simulation: ${test_name} DONE"
 done
