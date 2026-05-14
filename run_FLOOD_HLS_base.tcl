@@ -7,7 +7,7 @@ set_top do_compute
 # Define preprocessor macros for the number of rows, columns, and clouds
 # Note: these must be changed based on the considered scenario
 # The default values can be used with the tiny_mountains6c scenario
-set defs "-DNROWS=40 -DNCOLS=40 -DNCLOUDS=6" 
+set defs "-DNROWS=40 -DNCOLS=40 -DNCLOUDS=6 -DNUM_MIN=10" 
 
 # Add files and testbed
 add_files FLOOD.h -cflags $defs

@@ -35,24 +35,29 @@ void do_compute(struct parameters p, struct results &r) {
 
     /* Ground generation and initialization of other structures */
     int row_pos, col_pos, depth_pos;
+    initialization_row:
     for (row_pos = 0; row_pos < NROWS; row_pos++) {
+        initialization_col:
         for (col_pos = 0; col_pos < NCOLS; col_pos++) {
             accessMat(water_level, row_pos, col_pos) = 0;
             accessMat(spillage_flag, row_pos, col_pos) = 0.0;
             accessMat(spillage_level, row_pos, col_pos) = 0.0;
             int depths = CONTIGUOUS_CELLS;
+            initialization_depth:
             for (depth_pos = 0; depth_pos < depths; depth_pos++)
                 accessMat3D(spillage_from_neigh, row_pos, col_pos, depth_pos) = 0.0;
         }
     }
 
     /* Flood simulation (time iterations) */
+    main_minute_loop:
     for (r.minute = 0; r.minute < p.num_minutes && max_spillage_iter > p.threshold; r.minute++) {
-
+        #pragma HLS loop_tripcount min=0 max=NUM_MIN avg=NUM_MIN
         int new_row, new_col;
         int cell_pos;
 
         /* Step 1: Clouds movement */
+        cloud_movement:
         for (int cloud = 0; cloud < NCLOUDS; cloud++) {
             // Calculate new position (x are rows, y are columns)
             p.clouds[cloud].x += p.clouds[cloud].dx / 60;
@@ -60,6 +65,7 @@ void do_compute(struct parameters p, struct results &r) {
         }
 
         /* Rainfall */
+        rainfall_cloud:
         for (int cloud = 0; cloud < NCLOUDS; cloud++) {
             // Compute the bounding box area of the cloud
             float row_start = COORD_SCEN2MAT_Y(MAX(0, p.clouds[cloud].y - p.clouds[cloud].radius));
@@ -70,8 +76,12 @@ void do_compute(struct parameters p, struct results &r) {
 
             // Add rain to the ground water level
             float row_pos, col_pos;
+            rainfall_row:
             for (row_pos = row_start; row_pos < row_end; row_pos++) {
+                #pragma HLS loop_tripcount min=0 max=NROWS avg=NROWS
+                rainfall_col:
                 for (col_pos = col_start; col_pos < col_end; col_pos++) {
+                    #pragma HLS loop_tripcount min=0 max=NCOLS avg=NCOLS
                     float x_pos = COORD_MAT2SCEN_X(col_pos);
                     float y_pos = COORD_MAT2SCEN_Y(row_pos);
                     distance = sqrt(SQR(x_pos - p.clouds[cloud].x) + SQR(y_pos - p.clouds[cloud].y));
@@ -88,7 +98,9 @@ void do_compute(struct parameters p, struct results &r) {
         }
 
         /* Step 2: Compute water spillage to neighbor cells */
+        spillage_row:
         for (row_pos = 0; row_pos < NROWS; row_pos++) {
+            spillage_col:
             for (col_pos = 0; col_pos < NCOLS; col_pos++) {
                 if (accessMat(water_level, row_pos, col_pos) > 0) {
                     float sum_diff = 0;
@@ -99,6 +111,7 @@ void do_compute(struct parameters p, struct results &r) {
                         accessMat(p.ground, row_pos, col_pos) + FLOATING(accessMat(water_level, row_pos, col_pos));
 
                     // Iterate over the four neighboring cells using the displacement array
+                    spillage_neighbor_1:
                     for (cell_pos = 0; cell_pos < CONTIGUOUS_CELLS; cell_pos++) {
                         new_row = row_pos + displacements[cell_pos][0];
                         new_col = col_pos + displacements[cell_pos][1];
@@ -131,7 +144,8 @@ void do_compute(struct parameters p, struct results &r) {
                             accessMat(spillage_flag, row_pos, col_pos) = 1;
                             accessMat(spillage_level, row_pos, col_pos) = my_spillage_level;
 
-                            // Iterate over the four neighboring cells using the displacement array
+                            // Iterate over the four neighboring cells using the displacement 
+                            spillage_neighbor_2:
                             for (cell_pos = 0; cell_pos < 4; cell_pos++) {
                                 new_row = row_pos + displacements[cell_pos][0];
                                 new_col = col_pos + displacements[cell_pos][1];
@@ -165,7 +179,9 @@ void do_compute(struct parameters p, struct results &r) {
 
         /* Step 3: Propagation of previously computer water spillage to/from neighbors */
         max_spillage_iter = 0.0;
+        propagation_row:
         for (row_pos = 0; row_pos < NROWS; row_pos++) {
+            propagation_col:
             for (col_pos = 0; col_pos < NCOLS; col_pos++) {
                 // If the cell has spillage
                 if (accessMat(spillage_flag, row_pos, col_pos) == 1) {
@@ -186,6 +202,7 @@ void do_compute(struct parameters p, struct results &r) {
                 }
 
                 // Accumulate spillage from neighbors
+                accumulate_spillage:
                 for (cell_pos = 0; cell_pos < CONTIGUOUS_CELLS; cell_pos++) {
                     int depths = CONTIGUOUS_CELLS;
                     accessMat(water_level, row_pos, col_pos) +=
@@ -195,8 +212,11 @@ void do_compute(struct parameters p, struct results &r) {
         }
 
         /* Reset ancillary structures */
+        reset_rows:
         for (row_pos = 0; row_pos < NROWS; row_pos++) {
+            reset_col:
             for (col_pos = 0; col_pos < NCOLS; col_pos++) {
+                reset_depth:
                 for (cell_pos = 0; cell_pos < CONTIGUOUS_CELLS; cell_pos++) {
                     int depths = CONTIGUOUS_CELLS;
                     accessMat3D(spillage_from_neigh, row_pos, col_pos, cell_pos) = 0;
@@ -209,7 +229,9 @@ void do_compute(struct parameters p, struct results &r) {
 
     /* 5. Statistics: Total remaining water and maximum amount of water in a cell */
     r.max_water_scenario = 0.0;
+    statistics_row:
     for (row_pos = 0; row_pos < NROWS; row_pos++) {
+        statistics_col:
         for (col_pos = 0; col_pos < NCOLS; col_pos++) {
             if (FLOATING(accessMat(water_level, row_pos, col_pos)) > r.max_water_scenario)
                 r.max_water_scenario = FLOATING(accessMat(water_level, row_pos, col_pos));
