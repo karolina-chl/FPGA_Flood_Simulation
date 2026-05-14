@@ -33,7 +33,9 @@ create_clock -period 250MHz
 csim_design -argv "$arg_string"
 
 # Disable automatic pipelining (what does it change if you remove/comment this command?)
-config_compile -pipeline_loops 0
+if {$::env(AUTOPIPELINE) eq "false"} {
+    config_compile -pipeline_loops 0
+}
 
 # Run High-Level Synthesis (HLS)
 csynth_design
