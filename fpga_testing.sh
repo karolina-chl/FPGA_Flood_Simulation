@@ -7,58 +7,34 @@ CHECK_SCRIPT="test_files/check_correctness.py"
 CSIM_DIR="FLOOD_HLS_base/solution_FLOOD_HLS_base/csim/build"
 RTL_DIR="FLOOD_HLS_base/solution_FLOOD_HLS_base/sim/wrapc_pc"
 
-declare -A TESTS
+TESTS=("tiny_mountains" "tiny_dam" "small_mountains" "small_dam")
 
-TESTS["tiny_mountains"]="\
-${CPU_DIR}/tiny_mountains.out|\
-${CSIM_DIR}/tiny_mountains.out|\
-${RTL_DIR}/tiny_mountains.out"
+run_test() {
+    local label=$1
+    local ref=$2
+    local target=$3
+    local test_case=$4
 
-TESTS["tiny_dam"]="\
-${CPU_DIR}/tiny_dam.out|\
-${CSIM_DIR}/tiny_dam.out|\
-${RTL_DIR}/tiny_dam.out"
+    if [[ -f "$ref" && -f "$target" ]]; then
+        echo "Running $label: $test_case"
+        python3 "$CHECK_SCRIPT" "$ref" "$target"
+        echo "$label: $test_case COMPLETED"
+    else
+        echo -e "SKIPPING $label: $test_case\n Due to missing files:"
+        [[ ! -f "$ref" ]]    && echo "  - Missing: $ref"
+        [[ ! -f "$target" ]] && echo "  - Missing: $target"
+    fi
+}
 
-TESTS["small_mountains"]="\
-${CPU_DIR}/small_mountains.out|\
-${CSIM_DIR}/small_mountains.out|\
-${RTL_DIR}/small_mountains.out"
-
-TESTS["small_dam"]="\
-${CPU_DIR}/small_dam.out|\
-${CSIM_DIR}/small_dam.out|\
-${RTL_DIR}/small_dam.out"
-
-for test_name in "${!TESTS[@]}"; do
-
-    echo ""
-    echo "========================================"
+for test_name in "${TESTS[@]}"; do
+    echo -e "\n========================================"
     echo "Starting: ${test_name} ..."
     echo "========================================"
 
-    IFS='|' read -r cpu_out csim_out rtl_out <<< "${TESTS[$test_name]}"
+    cpu_out="${CPU_DIR}/${test_name}.out"
+    csim_out="${CSIM_DIR}/${test_name}.out"
+    rtl_out="${RTL_DIR}/${test_name}.out"
 
-    missing_files=""
-    [[ -f "$cpu_out" ]]  || missing_files+="  - CPU output: $cpu_out\n"
-    [[ -f "$csim_out" ]] || missing_files+="  - CSIM output: $csim_out\n"
-    if [[ -n "$missing_files" ]]; then
-        echo -e "SKIPPING C-Simulation: ${test_name} \n due to missing files:\n${missing_files}"
-        continue
-    fi
-
-    echo "Running C-Simulation: ${test_name}"
-    python3 "$CHECK_SCRIPT" "$cpu_out" "$csim_out"
-    echo "C-Simulation: ${test_name} COMPLETED"
-
-    missing_files=""
-    [[ -f "$cpu_out" ]]  || missing_files+="  - CPU output: $cpu_out\n"
-    [[ -f "$rtl_out" ]]  || missing_files+="  - RTL output: $rtl_out\n"
-    if [[ -n "$missing_files" ]]; then
-        echo -e "SKIPPING RTL Co-simulation: ${test_name} \n due to missing files:\n${missing_files}"
-        continue
-    fi
-
-    echo "Running RTL Co-simulation: ${test_name}"
-    python3 "$CHECK_SCRIPT" "$cpu_out" "$rtl_out"
-    echo "RTL Co-simulation: ${test_name} COMPLETED"
+    run_test "C-Simulation" "$cpu_out" "$csim_out" "$test_name"
+    run_test "RTL Co-simulation" "$cpu_out" "$rtl_out"  "$test_name"
 done
