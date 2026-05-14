@@ -2,7 +2,7 @@
 
 set -e
 
-make_cpu_flood=false
+make_cpu_flood=true
 
 CPU_DIR="cpu_impl"
 
