@@ -2,7 +2,7 @@
 #SBATCH --time=00:15:00
 #SBATCH --nodes=1
 
-TEST_FILE_PATH="cpu_impl/test_files"
+TEST_FILE_PATH="test_files"
 
 make flood
 
