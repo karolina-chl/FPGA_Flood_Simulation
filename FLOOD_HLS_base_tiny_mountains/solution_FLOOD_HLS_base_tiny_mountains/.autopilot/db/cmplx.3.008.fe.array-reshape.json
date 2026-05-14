@@ -1,0 +1,29 @@
+{
+  "0": {
+    "basicblocks": 66,
+    "calls": "1 1 1 1 1 1",
+    "file": "flood_HLS_base.cpp",
+    "fileloc": 25,
+    "instructions": 7049,
+    "loads": {
+      "G": 4,
+      "L": 21,
+      "T": 1610
+    },
+    "name": "do_compute",
+    "stores": {
+      "L": 1651,
+      "T": 6
+    },
+    "total_instructions": 7282
+  },
+  "1": {
+    "basicblocks": 1,
+    "calls": "",
+    "file": "lib_floatconversion.cpp",
+    "fileloc": 51,
+    "instructions": 24,
+    "name": "__hls_fptosi_float_i32",
+    "total_instructions": 24
+  }
+}

@@ -1,0 +1,15 @@
+<xilinx:hls_fe_msgs>
+    <msg msg_groups="PRAGMA_VERBOSE_DUMP" msg_id="207-5471" msg_severity="WARNING" msg_loc="/home/tln716/FPGA_Flood_Simulation/run_FLOOD_HLS_base.tcl:39:9" msg_body="HLS pragma dump">
+        <args ARG_PragmaContext="directive" ARG_PragmaFunction="do_compute" ARG_PragmaIsValid="1" ARG_PragmaOptions="name=do_compute" ARG_PragmaType="top" ClangWarningOption="dump-hls-pragmas"/>
+    </msg>
+    <msg msg_groups="PRAGMA_VERBOSE_DUMP" msg_id="207-5471" msg_severity="WARNING" msg_loc="flood_HLS_base.cpp:55:9" msg_body="HLS pragma dump">
+        <args ARG_PragmaFunction="do_compute" ARG_PragmaIsValid="1" ARG_PragmaOptions="min=0 max=10 avg=10" ARG_PragmaType="loop_tripcount" ClangWarningOption="dump-hls-pragmas"/>
+    </msg>
+    <msg msg_groups="PRAGMA_VERBOSE_DUMP" msg_id="207-5471" msg_severity="WARNING" msg_loc="flood_HLS_base.cpp:81:9" msg_body="HLS pragma dump">
+        <args ARG_PragmaFunction="do_compute" ARG_PragmaIsValid="1" ARG_PragmaOptions="min=0 max=40 avg=40" ARG_PragmaType="loop_tripcount" ClangWarningOption="dump-hls-pragmas"/>
+    </msg>
+    <msg msg_groups="PRAGMA_VERBOSE_DUMP" msg_id="207-5471" msg_severity="WARNING" msg_loc="flood_HLS_base.cpp:84:9" msg_body="HLS pragma dump">
+        <args ARG_PragmaFunction="do_compute" ARG_PragmaIsValid="1" ARG_PragmaOptions="min=0 max=40 avg=40" ARG_PragmaType="loop_tripcount" ClangWarningOption="dump-hls-pragmas"/>
+    </msg>
+</xilinx:hls_fe_msgs>
+

@@ -1,13 +1,13 @@
-# Create a new Vitis HLS project.
-# NOTE: this will reset the project if it already exists, 
-# so make sure to save any important files before running this script
-open_project -reset FLOOD_HLS_base
-set_top do_compute
+#project name and input file 
+set project_name $::env(PROJECT_NAME)
+set input_file $::env(INPUT_FILE)
 
 # Define preprocessor macros for the number of rows, columns, and clouds
-# Note: these must be changed based on the considered scenario
-# The default values can be used with the tiny_mountains6c scenario
-set defs "-DNROWS=40 -DNCOLS=40 -DNCLOUDS=6 -DNUM_MIN=10" 
+set defs "-DNROWS=$::env(NROWS) -DNCOLS=$::env(NCOLS) -DNCLOUDS=$::env(NCLOUDS) -DNUM_MIN=$::env(NUM_MIN)" 
+
+# Create a new Vitis HLS project.
+open_project -reset $project_name
+set_top do_compute
 
 # Add files and testbed
 add_files FLOOD.h -cflags $defs
@@ -15,13 +15,13 @@ add_files rng.cpp
 add_files flood_HLS_base.cpp -cflags $defs
 add_files -tb test_FLOOD_base.cpp -cflags $defs
 
-# Read the input arguments from the file (change the path as needed)
-set fp [open "test_files/tiny_mountains6c.in" r]
+# Read the input arguments from the file
+set fp [open $input_file r]
 set arg_string [read $fp]
 close $fp
 
 # Create a solution
-open_solution -reset "solution_FLOOD_HLS_base"
+open_solution -reset "solution_${project_name}"
 
 # Set the target FPGA part (modify as needed)
 set_part {virtexuplusHBM}
