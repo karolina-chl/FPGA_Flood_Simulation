@@ -74,3 +74,6 @@ FLOOD_HLS_optimized/
 
 # IDE
 .idea/
+
+# FPGA Report
+*.rpt
