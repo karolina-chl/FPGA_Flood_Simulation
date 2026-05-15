@@ -16,7 +16,7 @@ while getopts "rcbo" opt; do
     case $opt in
         r) REMAKE_CPU=true ;;
         c) RUN_CPU=true ;;
-        b) RUN_FPGA=true ;;
+        b) RUN_FPGA_BASE=true ;;
         o) RUN_FPGA_OPT=true ;;
         *) usage ;;
     esac
@@ -51,13 +51,13 @@ if [[ "$RUN_CPU" == true ]]; then
 fi
 
 # Base FPGA job launch
-if [[ "$RUN_FPGA" == true ]]; then
+if [[ "$RUN_FPGA_BASE" == true ]]; then
     echo "Submitting Base FPGA job..."
     FPGA_JOB_ID=$(sbatch --parsable job_base.sh)
     echo "Base FPGA job submitted with ID: ${FPGA_JOB_ID}"
 fi
 
 # Optimised FPGA job launch
-if [[ "$RUN_FPGA" == true ]]; then
+if [[ "$RUN_FPGA_OPT" == true ]]; then
     echo "NOT Implemented Yet"
 fi
