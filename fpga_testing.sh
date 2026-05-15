@@ -1,5 +1,25 @@
 #!/bin/bash
 
+usage() {
+    cat <<'EOF'
+    ###########################
+    ###     FLAG SYSTEM     ###
+    ###########################
+    # --c-sim: Test the result of the C-Simulation
+    # --rtl-cosim: Test the result of the RTL Co-simulation
+EOF
+}
+
+if [[ $# -eq 0]]; then
+    echo "No flags provided. Displaying help:"
+    usage
+    exit 0
+fi
+
+TEST_C=false
+TEST_RTL=false
+while [[]]
+
 set -e
 
 CPU_DIR="cpu_impl"
