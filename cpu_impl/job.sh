@@ -2,12 +2,14 @@
 #SBATCH --time=00:15:00
 #SBATCH --nodes=1
 
+TEST_FILE_PATH="test_files"
+
 make flood
 
-./flood $(< test_files/small_dam.in)
+./flood $(< ${TEST_FILE_PATH}/small_dam.in)
 
-./flood $(< test_files/small_mountains.in)
+./flood $(< ${TEST_FILE_PATH}/small_mountains.in)
 
-./flood $(< test_files/tiny_dam.in)
+./flood $(< ${TEST_FILE_PATH}/tiny_dam.in)
 
-./flood $(< test_files/tiny_mountains.in)
+./flood $(< ${TEST_FILE_PATH}/tiny_mountains.in)

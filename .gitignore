@@ -82,3 +82,6 @@ FLOOD_HLS_base_small_dam_pipelined/
 
 # IDE
 .idea/
+
+# FPGA Report
+*.rpt
