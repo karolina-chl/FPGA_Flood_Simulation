@@ -7,35 +7,35 @@ module load vivado/2024.1
 # Run the HLS synthesis for all test files: 
 # tiny_mountains, tiny_dam, small_mountains, small_dam
 
-### Tiny mountains 
-PROJECT_NAME="FLOOD_HLS_base_tiny_mountains" \
-INPUT_FILE="test_files/tiny_mountains6c.in" \
-NROWS="40" \
-NCOLS="40" \
-NCLOUDS="6" \
-NUM_MIN="10" \
-AUTOPIPELINE="false" \
-vitis_hls -f run_FLOOD_HLS_base.tcl | grep -v "OPMODE Input Warning" | grep -v "Time: "
-
-### Tiny Dam 
-PROJECT_NAME="FLOOD_HLS_base_tiny_dam" \
-INPUT_FILE="test_files/tiny_dam7c.in" \
-NROWS="50" \
-NCOLS="50" \
-NCLOUDS="7" \
-NUM_MIN="10" \
-AUTOPIPELINE="false" \
-vitis_hls -f run_FLOOD_HLS_base.tcl | grep -v "OPMODE Input Warning" | grep -v "Time: "
-
-### Small Mountains 
-PROJECT_NAME="FLOOD_HLS_base_small_mountains" \
-INPUT_FILE="test_files/small_mountains9c.in" \
-NROWS="60" \
-NCOLS="80" \
-NCLOUDS="9" \
-NUM_MIN="100" \
-AUTOPIPELINE="false" \
-vitis_hls -f run_FLOOD_HLS_base.tcl | grep -v "OPMODE Input Warning" | grep -v "Time: "
+#### Tiny mountains
+#PROJECT_NAME="FLOOD_HLS_base_tiny_mountains" \
+#INPUT_FILE="test_files/tiny_mountains6c.in" \
+#NROWS="40" \
+#NCOLS="40" \
+#NCLOUDS="6" \
+#NUM_MIN="10" \
+#AUTOPIPELINE="false" \
+#vitis_hls -f run_FLOOD_HLS_base.tcl | grep -v "OPMODE Input Warning" | grep -v "Time: "
+#
+#### Tiny Dam
+#PROJECT_NAME="FLOOD_HLS_base_tiny_dam" \
+#INPUT_FILE="test_files/tiny_dam7c.in" \
+#NROWS="50" \
+#NCOLS="50" \
+#NCLOUDS="7" \
+#NUM_MIN="10" \
+#AUTOPIPELINE="false" \
+#vitis_hls -f run_FLOOD_HLS_base.tcl | grep -v "OPMODE Input Warning" | grep -v "Time: "
+#
+#### Small Mountains
+#PROJECT_NAME="FLOOD_HLS_base_small_mountains" \
+#INPUT_FILE="test_files/small_mountains9c.in" \
+#NROWS="60" \
+#NCOLS="80" \
+#NCLOUDS="9" \
+#NUM_MIN="100" \
+#AUTOPIPELINE="false" \
+#vitis_hls -f run_FLOOD_HLS_base.tcl | grep -v "OPMODE Input Warning" | grep -v "Time: "
 
 ### Small Dam
 PROJECT_NAME="FLOOD_HLS_base_small_dam" \
