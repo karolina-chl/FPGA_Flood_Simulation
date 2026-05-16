@@ -15,16 +15,16 @@ void do_compute(struct parameters p, struct results &r) {
     const float INV_PRECISION = 1.0f / (float)PRECISION;
 
     int row_pos, col_pos, depth_pos;
-initialization_row:
+    initialization_row:
     for (row_pos = 0; row_pos < NROWS; row_pos++) {
         #pragma HLS PIPELINE II=1
-initialization_col:
+        initialization_col:
         for (col_pos = 0; col_pos < NCOLS; col_pos++) {
             accessMat(water_level, row_pos, col_pos) = 0;
             accessMat(spillage_flag, row_pos, col_pos) = 0.0;
             accessMat(spillage_level, row_pos, col_pos) = 0.0;
             int depths = CONTIGUOUS_CELLS;
-initialization_depth:
+            initialization_depth:
             for (depth_pos = 0; depth_pos < depths; depth_pos++) {
                 #pragma HLS UNROLL
                 accessMat3D(spillage_from_neigh, row_pos, col_pos, depth_pos) = 0.0;
