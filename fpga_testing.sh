@@ -1,24 +1,37 @@
 #!/bin/bash
 
 usage() {
-    cat <<'EOF'
+    cat << 'EOF'
     ###########################
     ###     FLAG SYSTEM     ###
     ###########################
-    # --c-sim: Test the result of the C-Simulation
-    # --rtl-cosim: Test the result of the RTL Co-simulation
+    -m, --mode <type>    Execution mode: csim, rtl, or all (default: all)
+    -s, --size <size>    Dataset size: tiny, small, or all (default: all)
+
+    If no flag was given, all combinations are executed.
 EOF
 }
 
-if [[ $# -eq 0]]; then
-    echo "No flags provided. Displaying help:"
-    usage
-    exit 0
-fi
+MODE="all"
+SIZE="all"
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -m|--mode) MODE=$2; shift ;;
+        -s|--size) SIZE=$2; shift ;;
+        -h|--help) usage; exit 0 ;;
+        *) echo "Error: Unknown flag '$1'"; usage; exit 1 ;;
+    esac
+    shift
+done
 
-TEST_C=false
-TEST_RTL=false
-while [[]]
+case $MODE in
+    all|csim|rtl) ;;
+    *) echo "Error: Invalid test mode $MODE"; usage; exit 1 ;;
+esac
+case $SIZE in
+    all|tiny|small) ;;
+    *) echo "Error: Invalid problem size $SIZE"; usage; exit 1 ;;
+esac
 
 set -e
 
@@ -41,20 +54,28 @@ run_test() {
         echo "$label: $test_case COMPLETED"
     else
         echo -e "SKIPPING $label: $test_case\n Due to missing files:"
-        [[ ! -f "$ref" ]]    && echo "  - Missing: $ref"
-        [[ ! -f "$target" ]] && echo "  - Missing: $target"
+        [[ ! -f "$ref" ]] && echo " - Missing: $ref"
+        [[ ! -f "$target" ]] && echo " - Missing: $target"
     fi
 }
 
 for test_name in "${TESTS[@]}"; do
+    case $test_name in
+        tiny*) [[ "$SIZE" == "all" || "$SIZE" == "tiny" ]] || continue ;;
+        small*) [[ "$SIZE" == "all" || "$SIZE" == "small" ]] || continue ;;
+    esac
+
     echo -e "\n========================================"
     echo "Starting: ${test_name} ..."
     echo "========================================"
 
     cpu_out="${CPU_DIR}/${test_name}.out"
-    csim_out="${CSIM_DIR}/${test_name}.out"
-    rtl_out="${RTL_DIR}/${test_name}.out"
-
-    run_test "C-Simulation" "$cpu_out" "$csim_out" "$test_name"
-    run_test "RTL Co-simulation" "$cpu_out" "$rtl_out"  "$test_name"
+    if [[ "$MODE" == "all" || "$MODE" == "csim" ]]; then
+        csim_out="${CSIM_DIR}/${test_name}.out"
+        run_test "C-Simulation" "$cpu_out" "$csim_out" "$test_name"
+    fi
+    if [[ "$MODE" == "all" || "$MODE" == "rtl" ]]; then
+        rtl_out="${RTL_DIR}/${test_name}.out"
+        run_test "RTL Co-simulation" "$cpu_out" "$rtl_out"  "$test_name"
+    fi
 done
