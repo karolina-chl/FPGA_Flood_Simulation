@@ -179,45 +179,47 @@ void do_compute(struct parameters p, struct results &r) {
 
 
         max_spillage_iter = 0.0;
-        propagation_row:
-        for (row_pos = 0; row_pos < NROWS; row_pos++) {
-            propagation_col:
-            for (col_pos = 0; col_pos < NCOLS; col_pos++) {
-                #pragma HLS LOOP_FLATTEN
-                #pragma HLS pipeline II=1
-                if (accessMat(spillage_flag, row_pos, col_pos) == 1) {
-                    accessMat(water_level, row_pos, col_pos) -=
-                        FIXED(accessMat(spillage_level, row_pos, col_pos) / SPILLAGE_FACTOR);
+
+        propagation_flat:
+        for (int idx = 0; idx < NROWS*NCOLS; idx++) {
+            #pragma HLS PIPELINE II=1
+            
+            int row_pos = idx / NCOLS;
+            int col_pos = idx % NCOLS;
+
+            if (accessMat(spillage_flag, row_pos, col_pos) == 1) {
+                accessMat(water_level, row_pos, col_pos) -=
+                    FIXED(accessMat(spillage_level, row_pos, col_pos) / SPILLAGE_FACTOR);
                     
-                    float spill = accessMat(spillage_level, row_pos, col_pos) / SPILLAGE_FACTOR;
-                    if (spill > max_spillage_iter) {
-                        max_spillage_iter = spill;
-                    }
-                    if (spill > r.max_spillage_scenario) {
-                        r.max_spillage_scenario = spill;
-                        r.max_spillage_minute = r.minute;
-                    }
+                float spill = accessMat(spillage_level, row_pos, col_pos) / SPILLAGE_FACTOR;
+                if (spill > max_spillage_iter) {
+                    max_spillage_iter = spill;
                 }
-
-                // Accumulate spillage from neighbors
-                int spillage = 0;
-
-                accumulate_spillage:
-                for (cell_pos = 0; cell_pos < CONTIGUOUS_CELLS; cell_pos++) {
-                    #pragma HLS UNROLL
-                    int depths = CONTIGUOUS_CELLS;
-                    spillage +=
-                        FIXED(accessMat3D(spillage_from_neigh, row_pos, col_pos, cell_pos) / SPILLAGE_FACTOR);
-                    
-                    accessMat3D(spillage_from_neigh, row_pos, col_pos, cell_pos) = 0;
+                if (spill > r.max_spillage_scenario) {
+                    r.max_spillage_scenario = spill;
+                    r.max_spillage_minute = r.minute;
                 }
-
-                accessMat(water_level, row_pos, col_pos) += spillage;
-                accessMat(spillage_flag, row_pos, col_pos) = 0;
-                accessMat(spillage_level, row_pos, col_pos) = 0;
             }
+
+            // Accumulate spillage from neighbors
+            int spillage = 0;
+
+            accumulate_spillage:
+            for (cell_pos = 0; cell_pos < CONTIGUOUS_CELLS; cell_pos++) {
+                #pragma HLS UNROLL
+                int depths = CONTIGUOUS_CELLS;
+                spillage +=
+                    FIXED(accessMat3D(spillage_from_neigh, row_pos, col_pos, cell_pos) / SPILLAGE_FACTOR);
+                    
+                accessMat3D(spillage_from_neigh, row_pos, col_pos, cell_pos) = 0;
+            }
+
+            accessMat(water_level, row_pos, col_pos) += spillage;
+            accessMat(spillage_flag, row_pos, col_pos) = 0;
+            accessMat(spillage_level, row_pos, col_pos) = 0;
         }
     }
+    
 
     r.max_water_scenario = 0.0;
     statistics_row:
