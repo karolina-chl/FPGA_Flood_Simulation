@@ -177,22 +177,24 @@ void do_compute(struct parameters p, struct results &r) {
             }
         }
 
+
         max_spillage_iter = 0.0;
         propagation_row:
         for (row_pos = 0; row_pos < NROWS; row_pos++) {
             propagation_col:
             for (col_pos = 0; col_pos < NCOLS; col_pos++) {
+                #pragma HLS LOOP_FLATTEN
                 #pragma HLS pipeline II=1
                 if (accessMat(spillage_flag, row_pos, col_pos) == 1) {
-
                     accessMat(water_level, row_pos, col_pos) -=
                         FIXED(accessMat(spillage_level, row_pos, col_pos) / SPILLAGE_FACTOR);
-
-                    if (accessMat(spillage_level, row_pos, col_pos) / SPILLAGE_FACTOR > max_spillage_iter) {
-                        max_spillage_iter = accessMat(spillage_level, row_pos, col_pos) / SPILLAGE_FACTOR;
+                    
+                    float spill = accessMat(spillage_level, row_pos, col_pos) / SPILLAGE_FACTOR;
+                    if (spill > max_spillage_iter) {
+                        max_spillage_iter = spill;
                     }
-                    if (accessMat(spillage_level, row_pos, col_pos) / SPILLAGE_FACTOR > r.max_spillage_scenario) {
-                        r.max_spillage_scenario = accessMat(spillage_level, row_pos, col_pos) / SPILLAGE_FACTOR;
+                    if (spill > r.max_spillage_scenario) {
+                        r.max_spillage_scenario = spill;
                         r.max_spillage_minute = r.minute;
                     }
                 }
@@ -206,22 +208,11 @@ void do_compute(struct parameters p, struct results &r) {
                     int depths = CONTIGUOUS_CELLS;
                     spillage +=
                         FIXED(accessMat3D(spillage_from_neigh, row_pos, col_pos, cell_pos) / SPILLAGE_FACTOR);
-                }
-                accessMat(water_level, row_pos, col_pos) += spillage;
-            }
-        }
-
-        reset_rows:
-        for (row_pos = 0; row_pos < NROWS; row_pos++) {
-            #pragma HLS PIPELINE II=1
-            reset_col:
-            for (col_pos = 0; col_pos < NCOLS; col_pos++) {
-                reset_depth:
-                for (cell_pos = 0; cell_pos < CONTIGUOUS_CELLS; cell_pos++) {
-                    #pragma HLS UNROLL
-                    int depths = CONTIGUOUS_CELLS;
+                    
                     accessMat3D(spillage_from_neigh, row_pos, col_pos, cell_pos) = 0;
                 }
+
+                accessMat(water_level, row_pos, col_pos) += spillage;
                 accessMat(spillage_flag, row_pos, col_pos) = 0;
                 accessMat(spillage_level, row_pos, col_pos) = 0;
             }
