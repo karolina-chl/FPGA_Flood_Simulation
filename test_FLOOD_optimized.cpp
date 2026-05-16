@@ -4,6 +4,7 @@
 #include "FLOOD.h"
 #include "rng.h"
 #include <cassert>
+#include <string.h>
 
 /*
  * Function: Generate ground height for a given position
@@ -206,22 +207,10 @@ int main(int argc, char *argv[]) {
      *
      */
 
-    float *ground;   // Ground height
-    Cloud_t *clouds; // Clouds
-
     /* Initialization */
     /* Memory allocation */
-    ground = (float *)malloc(sizeof(float) * (size_t)NROWS * (size_t)NCOLS);
-    clouds = (Cloud_t *)malloc(sizeof(Cloud_t) * (NCLOUDS));
-
-    if (ground == NULL) {
-        fprintf(stderr, "-- Error allocating ground and rain structures for size: %d x %d \n", NROWS, NCOLS);
-        exit(EXIT_FAILURE);
-    }
-    if (clouds == NULL) {
-        fprintf(stderr, "-- Error allocating clouds structures for size: %d\n", NCLOUDS);
-        exit(EXIT_FAILURE);
-    }
+    float ground[NROWS * NCOLS];
+    Cloud_t clouds[NCLOUDS];
 
     /* Ground generation and initialization of other structures */
     int row_pos, col_pos, depth_pos;
@@ -246,8 +235,8 @@ int main(int argc, char *argv[]) {
     assert(arg_clouds == NCLOUDS);
 
     // Set input parameters
-    p.ground = ground;
-    p.clouds = clouds;
+    memcpy(p.ground, ground, sizeof(p.ground));
+    memcpy(p.clouds, clouds, sizeof(p.clouds));
 
     struct results r = {.minute = 0,
                         .max_water_scenario = 0.0,
@@ -257,11 +246,7 @@ int main(int argc, char *argv[]) {
                         .total_water_loss = 0,
                         .total_rain = 0};
 
-    do_compute(&p, &r);
-
-    /* Free resources */
-    free(ground);
-    free(clouds);
+    do_compute(p, r);
 
     /* Write results to file*/
     writeResult(&r, argv[1]);
