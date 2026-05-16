@@ -13,9 +13,6 @@ void do_compute(struct parameters p, struct results &r) {
     float spillage_level[NROWS * NCOLS];
     float spillage_from_neigh[NROWS * NCOLS * CONTIGUOUS_CELLS];
 
-    #pragma HLS ARRAY_PARTITION variable=spillage_from_neigh complete dim=1
-    #pragma HLS ARRAY_PARTITION variable=displacements complete dim=0
-
 initialization_row:
     for (int row_pos = 0; row_pos < NROWS; row_pos++) {
 initialization_col:
@@ -36,7 +33,7 @@ initialization_depth:
 
 main_minute_loop:
     for (r.minute = 0; r.minute < p.num_minutes && max_spillage_iter > p.threshold; r.minute++) {
-    #pragma HLS loop_tripcount min=0 max=NUM_MIN avg=NUM_MIN
+        #pragma HLS loop_tripcount min=0 max=NUM_MIN avg=NUM_MIN
         int new_row, new_col;
         int cell_pos;
 
@@ -67,7 +64,7 @@ rainfall_col:
                     float y_pos = COORD_MAT2SCEN_Y(row_pos);
                     distance = sqrt(SQR(x_pos - p.clouds[cloud].x) + SQR(y_pos - p.clouds[cloud].y));
                     if (distance < p.clouds[cloud].radius) {
-                        float rain =
+                       float rain =
                             p.ex_factor * MAX(0, p.clouds[cloud].intensity - distance / p.clouds[cloud].radius *
                                                                                    sqrt(p.clouds[cloud].intensity));
                         float meters_per_minute = rain / 1000 / 60;
