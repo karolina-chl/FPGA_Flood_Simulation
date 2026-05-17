@@ -1,6 +1,7 @@
 #!/bin/sh
 #SBATCH --time=12:00:00         
 #SBATCH --nodes=1
+#SBATCH --nodelist=node034
 
 module load vivado/2024.1
 
@@ -8,7 +9,7 @@ module load vivado/2024.1
 # tiny_mountains, tiny_dam
 
 ### Tiny mountains 
-PROJECT_NAME="FLOOD_HLS_tiny_mountains_optimized" \
+PROJECT_NAME="FLOOD_HLS_optimized_tiny_mountains" \
 INPUT_FILE="test_files/tiny_mountains6c.in" \
 NROWS="40" \
 NCOLS="40" \
@@ -18,7 +19,7 @@ AUTOPIPELINE="false" \
 vitis_hls -f run_FLOOD_HLS_optimized.tcl | grep -v "OPMODE Input Warning" | grep -v "Time: "
 
 ### Tiny Dam 
-PROJECT_NAME="FLOOD_HLS_tiny_dam_optimized" \
+PROJECT_NAME="FLOOD_HLS_optimized_tiny_dam" \
 INPUT_FILE="test_files/tiny_dam7c.in" \
 NROWS="50" \
 NCOLS="50" \

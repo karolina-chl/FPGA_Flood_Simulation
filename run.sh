@@ -81,5 +81,7 @@ fi
 
 # Optimised FPGA job launch
 if [[ "$RUN_FPGA_OPT" == true ]]; then
-    echo "NOT There Yet"
+    echo "Submitting Optimized FPGA job..."
+    FPGA_JOB_ID=$(sbatch --parsable job_opt_all.sh)
+    echo "Optimized FPGA job submitted with ID: ${FPGA_JOB_ID}"
 fi

@@ -9,7 +9,7 @@ module load vivado/2024.1
 # tiny_mountains, tiny_dam, small_mountains, small_dam
 
 ### Tiny mountains 
-PROJECT_NAME="FLOOD_HLS_base_tiny_mountains_pipelined" \
+PROJECT_NAME="FLOOD_HLS_base_pipelined_tiny_mountains" \
 INPUT_FILE="test_files/tiny_mountains6c.in" \
 NROWS="40" \
 NCOLS="40" \
@@ -19,7 +19,7 @@ AUTOPIPELINE="true" \
 vitis_hls -f run_FLOOD_HLS_base.tcl | grep -v "OPMODE Input Warning" | grep -v "Time: "
 
 ### Tiny Dam 
-PROJECT_NAME="FLOOD_HLS_base_tiny_dam_pipelined" \
+PROJECT_NAME="FLOOD_HLS_base_pipelined_tiny_dam" \
 INPUT_FILE="test_files/tiny_dam7c.in" \
 NROWS="50" \
 NCOLS="50" \
@@ -29,7 +29,7 @@ AUTOPIPELINE="true" \
 vitis_hls -f run_FLOOD_HLS_base.tcl | grep -v "OPMODE Input Warning" | grep -v "Time: "
 
 ### Small Mountains 
-PROJECT_NAME="FLOOD_HLS_base_small_mountains_pipelined" \
+PROJECT_NAME="FLOOD_HLS_base_pipelined_small_mountains" \
 INPUT_FILE="test_files/small_mountains9c.in" \
 NROWS="60" \
 NCOLS="80" \
@@ -39,7 +39,7 @@ AUTOPIPELINE="true" \
 vitis_hls -f run_FLOOD_HLS_base.tcl | grep -v "OPMODE Input Warning" | grep -v "Time: "
 
 ### Small Dam
-PROJECT_NAME="FLOOD_HLS_base_small_dam_pipelined" \
+PROJECT_NAME="FLOOD_HLS_base_pipelined_small_dam" \
 INPUT_FILE="test_files/small_dam9c.in" \
 NROWS="90" \
 NCOLS="90" \
