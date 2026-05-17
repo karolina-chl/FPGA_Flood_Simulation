@@ -25,54 +25,89 @@ Below is the structure of the relevant project files and directories:
 ### Replication
 
 #### Running the Project
-The `run.sh` bash script in the root directory handles building the executables and running them to obtain results. Different flags control which specific implementation to build and run.
+The `run.sh` script is the main experiment launcher. It can:
+- build the CPU binary,
+- submit the CPU job,
+- submit FPGA jobs for `base`, `pipelined`, `opt`, or all versions.
 
-To view all available flags and usage instructions, run:
+The script expects flags (if no flags are provided it only prints usage):
 ```bash
-$ bash run.sh --help
-```
-#### CPU Implementation
-To build and execute the CPU implementation, run:
-```bash
-$ sbatch run.sh --build-cpu --run-cpu
+bash run.sh -m <synth|all> -t <tiny_mountains|tiny_dam|small_mountains|small_dam> -v <base|pipelined|opt|all> -b <y|n> -c <y|n>
 ```
 
-#### FPGA Implementations
-To obtain FPGA metrics and results, use the corresponding flags below.
+`-m synth` runs C-sim + synthesis (no RTL cosim).
 
-> [!WARNING]
-> Running a single FPGA implementation will automatically run the synthesis, C-Simulation, and RTL Co-Simulation for all four predefined test cases. To run only specific test cases, modify the corresponding job file.
+`-m all` runs C-sim + synthesis + RTL cosim (if your corresponding `*_with_rtl.sh` scripts are available).
 
+Note: `-t` is validated by `run.sh`, but the actual scenario coverage is determined by the selected job scripts (`job_base_all*.sh`, `job_opt_all*.sh`, etc.).
+
+#### Run Everything (recommended)
+Build CPU, run CPU, and submit all FPGA versions in synthesis mode:
 ```bash
-# FPGA Non-Pipelined Base Implementation
-$ sbatch run.sh --base-non-pipelined
-
-# FPGA Pipelined Base Implementation
-$ sbatch run.sh --base-pipelined
-
-# FPGA Optimised Implementation
-$ sbatch run.sh --opt
+bash run.sh -m all -t tiny_mountains -v all -b y -c y
 ```
 
-#### Testing Result
-To validate the outputs, use the `fpga_testing.sh` script located in the root folder. This script accepts options for problem size and test mode to control what is being tested and how.
+#### Synthesis Experiments (no RTL cosim)
+Use `-m synth` when you want C-simulation + synthesis only.
 
-To view all testing configurations, run:
+Run all FPGA versions:
 ```bash
-$ bash fpga_testing.sh --help
+bash run.sh -m synth -t tiny_mountains -v all -b n -c n
 ```
-> [!NOTE]
-> Running a given `problem_size` and `test_mode` combination attempts to execute all three FPGA implementations: `BASE`, `BASE_PIPELINED`, and `OPTIMIZED`. Implementations that are not found are skipped automatically.
 
-#### C-Simulation
-To test the C-Simulation across all four test case combinations: (tiny / small) x (mountains / dam), run:
+Run one specific FPGA version:
 ```bash
-$ sbatch fpga_testing.sh --mode csim
+bash run.sh -m synth -t tiny_mountains -v base -b n -c n
+bash run.sh -m synth -t tiny_mountains -v pipelined -b n -c n
+bash run.sh -m synth -t tiny_mountains -v opt -b n -c n
 ```
-#### RTL Co-Simulation
-To test the RTL Co-Simulation specifically for the `tiny_mountains` and `tiny_dam` test cases, run:
+
+#### Co-Simulation Experiments (includes RTL cosim)
+Use `-m all` when you want C-simulation + synthesis + RTL cosimulation.
+
+Run all FPGA versions with RTL cosim:
 ```bash
-$ sbatch fpga_testing.sh --mode rtl --size tiny
+bash run.sh -m all -t tiny_mountains -v all -b n -c n
+```
+
+Run one specific FPGA version with RTL cosim:
+```bash
+bash run.sh -m all -t tiny_mountains -v base -b n -c n
+bash run.sh -m all -t tiny_mountains -v pipelined -b n -c n
+bash run.sh -m all -t tiny_mountains -v opt -b n -c n
+```
+
+Note: RTL cosim requires the corresponding `*_with_rtl.sh` job scripts (`job_base_all_with_rtl.sh`, `job_base_all_pipelined_with_rtl.sh`, `job_opt_all_with_rtl.sh`).
+
+#### Useful Variants
+Only optimized FPGA, no CPU:
+```bash
+bash run.sh -m synth -t tiny_dam -v opt -b n -c n
+```
+
+Run base + pipelined + optimized with RTL cosim enabled:
+```bash
+bash run.sh -m all -t tiny_mountains -v all -b n -c n
+```
+
+CPU-only execution is done directly from `cpu_impl`:
+```bash
+cd cpu_impl
+make clean
+make flood
+sbatch job.sh
+cd ..
+```
+
+#### Check Submitted Jobs
+```bash
+squeue -u "$USER"
+```
+
+#### Testing Results
+To validate outputs with the helper script:
+```bash
+bash fpga_testing.sh --help
 ```
 
 ## Assignment Description
