@@ -8,16 +8,18 @@ void do_compute(struct parameters p, struct results &r) {
 
     double max_spillage_iter = p.threshold + 1;
 
-    int water_level[NROWS * NCOLS];
-    float spillage_flag[NROWS * NCOLS];
-    float spillage_level[NROWS * NCOLS];
-    float spillage_from_neigh[NROWS * NCOLS * CONTIGUOUS_CELLS];
+    int water_level[NROWS*NCOLS];
+    float spillage_flag[NROWS*NCOLS];
+    float spillage_level[NROWS*NCOLS];
+    float spillage_from_neigh[NROWS*NCOLS*CONTIGUOUS_CELLS];
+    const float INV_PRECISION = 1.0f / (float)PRECISION;
 
     #pragma HLS ARRAY_PARTITION variable=water_level cyclic factor=6 dim=1
     #pragma HLS ARRAY_PARTITION variable=spillage_from_neigh cyclic factor=4 dim=1
-initialization_row:
+    
+    initialization_row:
     for (int row_pos = 0; row_pos < NROWS; row_pos++) {
-initialization_col:
+        initialization_col:
         for (int col_pos = 0; col_pos < NCOLS; col_pos++) {
             #pragma HLS PIPELINE II=1
 
@@ -25,21 +27,23 @@ initialization_col:
             accessMat(spillage_flag, row_pos, col_pos) = 0.0f;
             accessMat(spillage_level, row_pos, col_pos) = 0.0f;
             int depths = CONTIGUOUS_CELLS;
-initialization_depth:
-            for (int depth_pos = 0; depth_pos < CONTIGUOUS_CELLS; depth_pos++) {
-                #pragma HLS unroll
+            initialization_depth:
+            for (depth_pos = 0; depth_pos < depths; depth_pos++) {
+                #pragma HLS UNROLL
                 accessMat3D(spillage_from_neigh, row_pos, col_pos, depth_pos) = 0.0;
-            }
+            }    
         }
     }
 
-main_minute_loop:
+    /* Flood simulation (time iterations) */
+    main_minute_loop:
     for (r.minute = 0; r.minute < p.num_minutes && max_spillage_iter > p.threshold; r.minute++) {
         #pragma HLS loop_tripcount min=0 max=NUM_MIN avg=NUM_MIN
         int new_row, new_col;
         int cell_pos;
 
-cloud_movement:
+        /* Step 1: Clouds movement */
+        cloud_movement:
         for (int cloud = 0; cloud < NCLOUDS; cloud++) {
             #pragma HLS pipeline II=1
             // Calculate new position (x are rows, y are columns)
@@ -47,50 +51,85 @@ cloud_movement:
             p.clouds[cloud].y += p.clouds[cloud].dy / 60;
         }
 
-rainfall_cloud:
+        /* Rainfall */
+        rainfall_cloud:
         for (int cloud = 0; cloud < NCLOUDS; cloud++) {
             float row_start = COORD_SCEN2MAT_Y(MAX(0, p.clouds[cloud].y - p.clouds[cloud].radius));
             float row_end = COORD_SCEN2MAT_Y(MIN(p.clouds[cloud].y + p.clouds[cloud].radius, SCENARIO_SIZE));
             float col_start = COORD_SCEN2MAT_X(MAX(0, p.clouds[cloud].x - p.clouds[cloud].radius));
             float col_end = COORD_SCEN2MAT_X(MIN(p.clouds[cloud].x + p.clouds[cloud].radius, SCENARIO_SIZE));
             float distance;
-rainfall_row:
-            for (int row_pos = row_start; row_pos < row_end; row_pos++) {
+
+            // Access all cloud parameters once - to avoid reaccesing inside the loops
+            float cloud_x = p.clouds[cloud].x;
+            float cloud_y = p.clouds[cloud].y; 
+            float radius = p.clouds[cloud].radius;
+            float radius2 = radius*radius; 
+            float intensity = p.clouds[cloud].intensity;
+            float sqrt_intensity = sqrt(intensity);
+            float rain_scale = p.ex_factor / 1000 / 60;
+            float inv_radius = 1.0f / radius;
+
+            // total rain - local variable per cloud 
+            int local_total_rain = 0;
+
+            // Add rain to the ground water level
+            float row_pos, col_pos;
+
+            rainfall_row:
+            for (row_pos = row_start; row_pos < row_end; row_pos++) {
                 #pragma HLS loop_tripcount min=0 max=NROWS avg=NROWS
-rainfall_col:
-                for (int col_pos = col_start; col_pos < col_end; col_pos++) {
-                    #pragma HLS PIPELINE II=1
+
+                float y_pos = COORD_MAT2SCEN_Y(row_pos);
+                float dy = y_pos - cloud_y;
+                float dy2 = SQR(dy);
+
+                rainfall_col:
+                for (col_pos = col_start; col_pos < col_end; col_pos++) {
                     #pragma HLS loop_tripcount min=0 max=NCOLS avg=NCOLS
+                    #pragma HLS PIPELINE II=1
                     
                     float x_pos = COORD_MAT2SCEN_X(col_pos);
-                    float y_pos = COORD_MAT2SCEN_Y(row_pos);
-                    distance = sqrt(SQR(x_pos - p.clouds[cloud].x) + SQR(y_pos - p.clouds[cloud].y));
-                    if (distance < p.clouds[cloud].radius) {
-                       float rain =
-                            p.ex_factor * MAX(0, p.clouds[cloud].intensity - distance / p.clouds[cloud].radius *
-                                                                                   sqrt(p.clouds[cloud].intensity));
-                        float meters_per_minute = rain / 1000 / 60;
-                        accessMat(water_level, row_pos, col_pos) += FIXED(meters_per_minute);
-                        r.total_rain += FIXED(meters_per_minute);
+                    float dx = x_pos - cloud_x; 
+                    float distance2 = SQR(dx) + dy2;
+
+                    if (distance2 < radius2) {
+                        distance = sqrt(distance2);
+
+                        float rain =
+                            MAX(0, intensity - distance * inv_radius * sqrt_intensity);
+                        float meters_per_minute = rain * rain_scale;
+                        int rain_fixed = FIXED(meters_per_minute);
+
+                        accessMat(water_level, row_pos, col_pos) += rain_fixed;
+                        local_total_rain += rain_fixed;
                     }
                 }
             }
+            r.total_rain += local_total_rain;
         }
+       
 
-spillage_row:
-        for (int row_pos = 0; row_pos < NROWS; row_pos++) {
-spillage_col:
-            for (int col_pos = 0; col_pos < NCOLS; col_pos++) {
+        /* Step 2: Compute water spillage to neighbor cells */
+        spillage_row:
+        for (row_pos = 0; row_pos < NROWS; row_pos++) {
+            spillage_col:
+            for (col_pos = 0; col_pos < NCOLS; col_pos++) {
                 #pragma HLS pipeline II=1
-                if (accessMat(water_level, row_pos, col_pos) > 0) {
+                int current_water_level = accessMat(water_level, row_pos, col_pos);
+                if (current_water_level > 0) {
                     float sum_diff = 0;
                     float my_spillage_level = 0;
-                    float current_height =
-                        accessMat(p.ground, row_pos, col_pos) + FLOATING(accessMat(water_level, row_pos, col_pos));
+                    float water_level_float = (current_water_level) * INV_PRECISION;
 
-spillage_neighbor_1:
-                    for (int cell_pos = 0; cell_pos < CONTIGUOUS_CELLS; cell_pos++) {
-                        #pragma HLS unroll
+                    /* Differences between current-cell level and its neighbours  */
+                    float current_height =
+                        accessMat(p.ground, row_pos, col_pos) + water_level_float;
+
+                    // Iterate over the four neighboring cells using the displacement array
+                    spillage_neighbor_1:
+                    for (cell_pos = 0; cell_pos < CONTIGUOUS_CELLS; cell_pos++) {
+                        #pragma HLS UNROLL
                         new_row = row_pos + displacements[cell_pos][0];
                         new_col = col_pos + displacements[cell_pos][1];
 
@@ -101,7 +140,7 @@ spillage_neighbor_1:
                             neighbor_height = accessMat(p.ground, row_pos, col_pos);
                         else
                             neighbor_height = accessMat(p.ground, new_row, new_col) +
-                                              FLOATING(accessMat(water_level, new_row, new_col));
+                                              accessMat(water_level, new_row, new_col)*INV_PRECISION;
 
                         if (current_height >= neighbor_height) {
                             float height_diff = current_height - neighbor_height;
@@ -109,7 +148,7 @@ spillage_neighbor_1:
                             my_spillage_level = MAX(my_spillage_level, height_diff);
                         }
                     }
-                    my_spillage_level = MIN(FLOATING(accessMat(water_level, row_pos, col_pos)), my_spillage_level);
+                    my_spillage_level = MIN(water_level_float, my_spillage_level);
 
                     if (sum_diff > 0.0) {
                         float proportion = my_spillage_level / sum_diff;
@@ -117,9 +156,9 @@ spillage_neighbor_1:
                             accessMat(spillage_flag, row_pos, col_pos) = 1;
                             accessMat(spillage_level, row_pos, col_pos) = my_spillage_level;
 
-spillage_neighbor_2:
-                            for (int cell_pos = 0; cell_pos < CONTIGUOUS_CELLS; cell_pos++) {
-                                #pragma HLS unroll
+                            spillage_neighbor_2:
+                            for (cell_pos = 0; cell_pos < 4; cell_pos++) {
+                                #pragma HLS UNROLL
                                 new_row = row_pos + displacements[cell_pos][0];
                                 new_col = col_pos + displacements[cell_pos][1];
 
@@ -148,61 +187,54 @@ spillage_neighbor_2:
             }
         }
 
+
         max_spillage_iter = 0.0;
-propagation_row:
-        for (int row_pos = 0; row_pos < NROWS; row_pos++) {
-propagation_col:
-            for (int col_pos = 0; col_pos < NCOLS; col_pos++) {
-                #pragma HLS pipeline II=1
-                if (accessMat(spillage_flag, row_pos, col_pos) == 1) {
 
-                    accessMat(water_level, row_pos, col_pos) -=
-                        FIXED(accessMat(spillage_level, row_pos, col_pos) / SPILLAGE_FACTOR);
+        propagation_flat:
+        for (int idx = 0; idx < NROWS*NCOLS; idx++) {
+            #pragma HLS PIPELINE II=1
+            
+            int row_pos = idx / NCOLS;
+            int col_pos = idx % NCOLS;
 
-                    if (accessMat(spillage_level, row_pos, col_pos) / SPILLAGE_FACTOR > max_spillage_iter) {
-                        max_spillage_iter = accessMat(spillage_level, row_pos, col_pos) / SPILLAGE_FACTOR;
-                    }
-                    if (accessMat(spillage_level, row_pos, col_pos) / SPILLAGE_FACTOR > r.max_spillage_scenario) {
-                        r.max_spillage_scenario = accessMat(spillage_level, row_pos, col_pos) / SPILLAGE_FACTOR;
-                        r.max_spillage_minute = r.minute;
-                    }
+            if (accessMat(spillage_flag, row_pos, col_pos) == 1) {
+                accessMat(water_level, row_pos, col_pos) -=
+                    FIXED(accessMat(spillage_level, row_pos, col_pos) / SPILLAGE_FACTOR);
+                    
+                float spill = accessMat(spillage_level, row_pos, col_pos) / SPILLAGE_FACTOR;
+                if (spill > max_spillage_iter) {
+                    max_spillage_iter = spill;
                 }
-
-                // Accumulate spillage from neighbors
-accumulate_spillage:
-                for (int cell_pos = 0; cell_pos < CONTIGUOUS_CELLS; cell_pos++) {
-                    #pragma HLS unroll
-                    int depths = CONTIGUOUS_CELLS;
-                    accessMat(water_level, row_pos, col_pos) +=
-                        FIXED(accessMat3D(spillage_from_neigh, row_pos, col_pos, cell_pos) / SPILLAGE_FACTOR);
+                if (spill > r.max_spillage_scenario) {
+                    r.max_spillage_scenario = spill;
+                    r.max_spillage_minute = r.minute;
                 }
             }
-        }
 
-reset_rows:
-        for (int row_pos = 0; row_pos < NROWS; row_pos++) {
-reset_col:
-            for (int col_pos = 0; col_pos < NCOLS; col_pos++) {
-                #pragma HLS pipeline II=1
-                reset_depth:
-                for (int cell_pos = 0; cell_pos < CONTIGUOUS_CELLS; cell_pos++) {
-                    #pragma HLS unroll
-                    int depths = CONTIGUOUS_CELLS;
-                    accessMat3D(spillage_from_neigh, row_pos, col_pos, cell_pos) = 0;
-                }
-                accessMat(spillage_flag, row_pos, col_pos) = 0;
-                accessMat(spillage_level, row_pos, col_pos) = 0;
+            // Accumulate spillage from neighbors
+            int spillage = 0;
+
+            accumulate_spillage:
+            for (cell_pos = 0; cell_pos < CONTIGUOUS_CELLS; cell_pos++) {
+                #pragma HLS UNROLL
+                int depths = CONTIGUOUS_CELLS;
+                spillage +=
+                    FIXED(accessMat3D(spillage_from_neigh, row_pos, col_pos, cell_pos) / SPILLAGE_FACTOR);
+                    
+                accessMat3D(spillage_from_neigh, row_pos, col_pos, cell_pos) = 0;
             }
+
+            accessMat(water_level, row_pos, col_pos) += spillage;
+            accessMat(spillage_flag, row_pos, col_pos) = 0;
+            accessMat(spillage_level, row_pos, col_pos) = 0;
         }
     }
-
-    /* 5. Statistics: Total remaining water and maximum amount of water in a cell */
     r.max_water_scenario = 0.0;
-statistics_row:
-    for (int row_pos = 0; row_pos < NROWS; row_pos++) {
-statistics_col:
-        for (int col_pos = 0; col_pos < NCOLS; col_pos++) {
-            #pragma HLS pipeline II=1
+    statistics_row:
+    for (row_pos = 0; row_pos < NROWS; row_pos++) {
+        statistics_col:
+        for (col_pos = 0; col_pos < NCOLS; col_pos++) {
+            #pragma HLS PIPELINE II=1
             if (FLOATING(accessMat(water_level, row_pos, col_pos)) > r.max_water_scenario)
                 r.max_water_scenario = FLOATING(accessMat(water_level, row_pos, col_pos));
             r.total_water += accessMat(water_level, row_pos, col_pos);

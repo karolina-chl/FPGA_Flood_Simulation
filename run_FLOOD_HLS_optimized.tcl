@@ -5,9 +5,9 @@ set input_file $::env(INPUT_FILE)
 # Define preprocessor macros for the number of rows, columns, and clouds
 set defs "-DNROWS=$::env(NROWS) -DNCOLS=$::env(NCOLS) -DNCLOUDS=$::env(NCLOUDS) -DNUM_MIN=$::env(NUM_MIN)" 
 
-
+# Create a new Vitis HLS project.
 open_project -reset $project_name
-set_top do_compute
+set_top do_compute 
 
 # Add files and testbed
 add_files FLOOD.h -cflags $defs
@@ -15,7 +15,7 @@ add_files rng.cpp
 add_files flood_HLS_optimized.cpp -cflags $defs
 add_files -tb test_FLOOD_optimized.cpp -cflags $defs
 
-# Read the input arguments from the file (change the path as needed)
+# Read the input arguments from the file
 set fp [open $input_file r]
 set arg_string [read $fp]
 close $fp
