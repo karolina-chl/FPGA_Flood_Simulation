@@ -1,6 +1,7 @@
 #!/bin/sh
 #SBATCH --time=12:00:00         
-#SBATCH --nodes=1              
+#SBATCH --nodes=1
+#SBATCH --nodelist=node034
 
 module load vivado/2024.1
 
