@@ -67,8 +67,11 @@ for test_name in "${TESTS[@]}"; do
     echo -e "\n========================================"
     echo "Starting: ${test_name} ..."
     echo "========================================"
+    echo ""
 
     for fpga_version in "${FPGA_VERSIONS[@]}"; do
+        echo "Running test for $fpga_version ..."
+        echo ""
         CSIM_DIR="FLOOD_HLS_${fpga_version}_${test_name}/solution_FLOOD_HLS_${fpga_version}_${test_name}/csim/build"
         RTL_DIR="FLOOD_HLS_${fpga_version}_${test_name}/solution_FLOOD_HLS_${fpga_version}_${test_name}/sim/wrapc_pc"
 
@@ -81,5 +84,6 @@ for test_name in "${TESTS[@]}"; do
             rtl_out="${RTL_DIR}/${test_name}.out"
             run_test "RTL Co-simulation" "$cpu_out" "$rtl_out"  "$test_name"
         fi
+        echo ""
     done
 done
