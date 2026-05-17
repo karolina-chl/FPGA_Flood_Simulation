@@ -61,6 +61,9 @@ To view all testing configurations, run:
 ```bash
 $ bash fpga_testing.sh --help
 ```
+> [!NOTE]
+> Running a given `problem_size` and `test_mode` combination attempts to execute all three FPGA implementations: `BASE`, `BASE_PIPELINED`, and `OPTIMIZED`. Implementations that are not found are skipped automatically.
+
 #### C-Simulation
 To test the C-Simulation across all four test case combinations: (tiny / small) x (mountains / dam), run:
 ```bash
