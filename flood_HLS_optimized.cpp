@@ -14,6 +14,9 @@ void do_compute(struct parameters p, struct results &r) {
     float spillage_from_neigh[NROWS*NCOLS*CONTIGUOUS_CELLS];
     const float INV_PRECISION = 1.0f / (float)PRECISION;
 
+    #pragma HLS ARRAY_PARTITION variable=water_level cyclic factor=6 dim=1
+    #pragma HLS ARRAY_PARTITION variable=spillage_from_neigh cyclic factor=4 dim=1
+
     int row_pos, col_pos, depth_pos;
     initialization_row:
     for (row_pos = 0; row_pos < NROWS; row_pos++) {
