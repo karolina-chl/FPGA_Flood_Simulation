@@ -16,16 +16,16 @@ void do_compute(struct parameters p, struct results &r) {
 
     #pragma HLS ARRAY_PARTITION variable=water_level cyclic factor=6 dim=1
     #pragma HLS ARRAY_PARTITION variable=spillage_from_neigh cyclic factor=4 dim=1
-    
-    initialization_row:
-    for (int row_pos = 0; row_pos < NROWS; row_pos++) {
-        initialization_col:
-        for (int col_pos = 0; col_pos < NCOLS; col_pos++) {
-            #pragma HLS PIPELINE II=1
 
+    int row_pos, col_pos, depth_pos;
+    initialization_row:
+    for (row_pos = 0; row_pos < NROWS; row_pos++) {
+        #pragma HLS PIPELINE II=1
+        initialization_col:
+        for (col_pos = 0; col_pos < NCOLS; col_pos++) {
             accessMat(water_level, row_pos, col_pos) = 0;
-            accessMat(spillage_flag, row_pos, col_pos) = 0.0f;
-            accessMat(spillage_level, row_pos, col_pos) = 0.0f;
+            accessMat(spillage_flag, row_pos, col_pos) = 0.0;
+            accessMat(spillage_level, row_pos, col_pos) = 0.0;
             int depths = CONTIGUOUS_CELLS;
             initialization_depth:
             for (depth_pos = 0; depth_pos < depths; depth_pos++) {
@@ -45,7 +45,7 @@ void do_compute(struct parameters p, struct results &r) {
         /* Step 1: Clouds movement */
         cloud_movement:
         for (int cloud = 0; cloud < NCLOUDS; cloud++) {
-            #pragma HLS pipeline II=1
+            #pragma HLS PIPELINE II=1
             // Calculate new position (x are rows, y are columns)
             p.clouds[cloud].x += p.clouds[cloud].dx / 60;
             p.clouds[cloud].y += p.clouds[cloud].dy / 60;
@@ -54,6 +54,7 @@ void do_compute(struct parameters p, struct results &r) {
         /* Rainfall */
         rainfall_cloud:
         for (int cloud = 0; cloud < NCLOUDS; cloud++) {
+            // Compute the bounding box area of the cloud
             float row_start = COORD_SCEN2MAT_Y(MAX(0, p.clouds[cloud].y - p.clouds[cloud].radius));
             float row_end = COORD_SCEN2MAT_Y(MIN(p.clouds[cloud].y + p.clouds[cloud].radius, SCENARIO_SIZE));
             float col_start = COORD_SCEN2MAT_X(MAX(0, p.clouds[cloud].x - p.clouds[cloud].radius));
@@ -229,6 +230,8 @@ void do_compute(struct parameters p, struct results &r) {
             accessMat(spillage_level, row_pos, col_pos) = 0;
         }
     }
+    
+
     r.max_water_scenario = 0.0;
     statistics_row:
     for (row_pos = 0; row_pos < NROWS; row_pos++) {
