@@ -37,6 +37,7 @@ set -e
 
 CPU_DIR="cpu_impl"
 CHECK_SCRIPT="test_files/check_correctness.py"
+FPGA_VERSIONS=("base" "base_pipelined" "optimized")
 
 TESTS=("tiny_mountains" "tiny_dam" "small_mountains" "small_dam")
 
@@ -63,20 +64,26 @@ for test_name in "${TESTS[@]}"; do
         small*) [[ "$SIZE" == "all" || "$SIZE" == "small" ]] || continue ;;
     esac
 
-    CSIM_DIR="FLOOD_HLS_base_${test_name}/solution_FLOOD_HLS_base_${test_name}/csim/build"
-    RTL_DIR="FLOOD_HLS_base_${test_name}/solution_FLOOD_HLS_base_${test_name}/sim/wrapc_pc"
-
     echo -e "\n========================================"
     echo "Starting: ${test_name} ..."
     echo "========================================"
+    echo ""
 
-    cpu_out="${CPU_DIR}/${test_name}.out"
-    if [[ "$MODE" == "all" || "$MODE" == "csim" ]]; then
-        csim_out="${CSIM_DIR}/${test_name}.out"
-        run_test "C-Simulation" "$cpu_out" "$csim_out" "$test_name"
-    fi
-    if [[ "$MODE" == "all" || "$MODE" == "rtl" ]]; then
-        rtl_out="${RTL_DIR}/${test_name}.out"
-        run_test "RTL Co-simulation" "$cpu_out" "$rtl_out"  "$test_name"
-    fi
+    for fpga_version in "${FPGA_VERSIONS[@]}"; do
+        echo "Running test for $fpga_version ..."
+        echo ""
+        CSIM_DIR="FLOOD_HLS_${fpga_version}_${test_name}/solution_FLOOD_HLS_${fpga_version}_${test_name}/csim/build"
+        RTL_DIR="FLOOD_HLS_${fpga_version}_${test_name}/solution_FLOOD_HLS_${fpga_version}_${test_name}/sim/wrapc_pc"
+
+        cpu_out="${CPU_DIR}/${test_name}.out"
+        if [[ "$MODE" == "all" || "$MODE" == "csim" ]]; then
+            csim_out="${CSIM_DIR}/${test_name}.out"
+            run_test "C-Simulation" "$cpu_out" "$csim_out" "$test_name"
+        fi
+        if [[ "$MODE" == "all" || "$MODE" == "rtl" ]]; then
+            rtl_out="${RTL_DIR}/${test_name}.out"
+            run_test "RTL Co-simulation" "$cpu_out" "$rtl_out"  "$test_name"
+        fi
+        echo ""
+    done
 done
