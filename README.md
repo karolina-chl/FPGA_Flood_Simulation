@@ -1,5 +1,76 @@
-# VU ACCE Course - FPGA Group Project
+# VU ACCE Course - FPGA Group Project (Group 15)
 
+## Overview
+
+This repository contains the solution for the FPGA Group Project Assignment for the VU ACCE Course.
+
+### Repository Structure
+
+Below is the structure of the relevant project files and directories:
+
+```text
+.
+├── cpu_impl/                 # CPU implementation and execution script
+├── test_files/               # Predefined test cases
+├── flood_HLS_base.cpp        # Base FPGA implementation
+├── flood_HLS_optimized.cpp   # Optimized FPGA implementation
+├── job_base_all.sh           # Job script for the Non-Pipelined Base FPGA implementation
+├── job_base_all_pipelined.sh # Job script for the Pipelined Base FPGA implementation
+├── job_opt_all.sh            # Job script for the Optimized FPGA implementation
+├── run.sh                    # Main build and execution script
+├── fpga_testing.sh           # Testing and validation script
+└── ...
+```
+
+### Replication
+
+#### Running the Project
+The `run.sh` bash script in the root directory handles building the executables and running them to obtain results. Different flags control which specific implementation to build and run.
+
+To view all available flags and usage instructions, run:
+```bash
+$ bash run.sh --help
+```
+#### CPU Implementation
+To build and execute the CPU implementation, run:
+```bash
+$ sbatch run.sh --build-cpu --run-cpu
+```
+
+#### FPGA Implementations
+To obtain FPGA metrics and results, use the corresponding flags below.
+
+> [!WARNING]
+> Running a single FPGA implementation will automatically run the synthesis, C-Simulation, and RTL Co-Simulation for all four predefined test cases. To run only specific test cases, modify the corresponding job file.
+
+```bash
+# FPGA Non-Pipelined Base Implementation
+$ sbatch run.sh --base-non-pipelined
+
+# FPGA Pipelined Base Implementation
+$ sbatch run.sh --base-pipelined
+
+# FPGA Optimised Implementation
+$ sbatch run.sh --opt
+```
+
+#### Testing Result
+To validate the outputs, use the `fpga_testing.sh` script located in the root folder. This script accepts options for problem size and test mode to control what is being tested and how.
+
+To view all testing configurations, run:
+```bash
+$ bash fpga_testing.sh --help
+```
+#### C-Simulation
+To test the C-Simulation across all four test case combinations: (tiny / small) x (mountains / dam), run:
+```bash
+$ sbatch fpga_testing.sh --mode csim
+```
+#### RTL Co-Simulation
+To test the RTL Co-Simulation specifically for the `tiny_mountains` and `tiny_dam` test cases, run:
+```bash
+$ sbatch fpga_testing.sh --mode rtl --size tiny
+```
 
 ## Assignment Description
 
