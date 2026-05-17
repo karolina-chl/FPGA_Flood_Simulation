@@ -41,7 +41,7 @@ if {$::env(AUTOPIPELINE) eq "false"} {
 csynth_design
 
 # Run co-simulation (Attention, this might require a long time, you may want to comment it out for development purposes)
-# cosim_design -argv "$arg_string" -trace_level none -enable_binary_tv 
+cosim_design -argv "$arg_string" -trace_level none -enable_binary_tv 
 
 exit
 
