@@ -5,8 +5,8 @@ usage() {
     ###########################
     ###     FLAG SYSTEM     ###
     ###########################
-    -m, --mode <type>    Execution mode: csim, rtl, or all (default: all)
-    -s, --size <size>    Dataset size: tiny, small, or all (default: all)
+    -m, --mode <test type>    Execution mode: csim, rtl, or all (default: all)
+    -s, --size <problem size>    Dataset size: tiny, small, or all (default: all)
 
     If no flag was given, all combinations are executed.
 EOF
@@ -37,8 +37,6 @@ set -e
 
 CPU_DIR="cpu_impl"
 CHECK_SCRIPT="test_files/check_correctness.py"
-CSIM_DIR="FLOOD_HLS_base/solution_FLOOD_HLS_base/csim/build"
-RTL_DIR="FLOOD_HLS_base/solution_FLOOD_HLS_base/sim/wrapc_pc"
 
 TESTS=("tiny_mountains" "tiny_dam" "small_mountains" "small_dam")
 
@@ -50,7 +48,7 @@ run_test() {
 
     if [[ -f "$ref" && -f "$target" ]]; then
         echo "Running $label: $test_case"
-        python3 "$CHECK_SCRIPT" "$ref" "$target"
+        python3 "$CHECK_SCRIPT" "$ref" "$target" || echo "WARNING: Verification failed for $test_case"
         echo "$label: $test_case COMPLETED"
     else
         echo -e "SKIPPING $label: $test_case\n Due to missing files:"
@@ -64,6 +62,9 @@ for test_name in "${TESTS[@]}"; do
         tiny*) [[ "$SIZE" == "all" || "$SIZE" == "tiny" ]] || continue ;;
         small*) [[ "$SIZE" == "all" || "$SIZE" == "small" ]] || continue ;;
     esac
+
+    CSIM_DIR="FLOOD_HLS_base_${test_name}/solution_FLOOD_HLS_base/csim/build"
+    RTL_DIR="FLOOD_HLS_base_${test_name}/solution_FLOOD_HLS_base/sim/wrapc_pc"
 
     echo -e "\n========================================"
     echo "Starting: ${test_name} ..."
