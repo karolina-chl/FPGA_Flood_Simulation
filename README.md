@@ -16,6 +16,7 @@ Below is the structure of the relevant project files and directories:
 ├── flood_HLS_optimized.cpp   # Optimized FPGA implementation
 ├── job_base_all.sh           # Job script for the Non-Pipelined Base FPGA implementation
 ├── job_base_all_pipelined.sh # Job script for the Pipelined Base FPGA implementation
+├── job_opt_all.sh            # Job script for the Optimized FPGA implementation
 ├── run.sh                    # Main build and execution script
 ├── fpga_testing.sh           # Testing and validation script
 └── ...
@@ -40,7 +41,7 @@ $ sbatch run.sh --build-cpu --run-cpu
 To obtain FPGA metrics and results, use the corresponding flags below.
 
 > [!WARNING]
-> Running a single FPGA implementation will automatically run the synthesis, C-Simulation, and RTL Co-Simulation for all four predefined test cases.
+> Running a single FPGA implementation will automatically run the synthesis, C-Simulation, and RTL Co-Simulation for all four predefined test cases. To run only specific test cases, modify the corresponding job file.
 
 ```bash
 # FPGA Non-Pipelined Base Implementation
