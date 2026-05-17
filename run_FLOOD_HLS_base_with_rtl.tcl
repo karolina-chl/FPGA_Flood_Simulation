@@ -7,13 +7,13 @@ set defs "-DNROWS=$::env(NROWS) -DNCOLS=$::env(NCOLS) -DNCLOUDS=$::env(NCLOUDS) 
 
 # Create a new Vitis HLS project.
 open_project -reset $project_name
-set_top do_compute 
+set_top do_compute
 
 # Add files and testbed
 add_files FLOOD.h -cflags $defs
 add_files rng.cpp
-add_files flood_HLS_optimized.cpp -cflags $defs
-add_files -tb test_FLOOD_optimized.cpp -cflags $defs
+add_files flood_HLS_base.cpp -cflags $defs
+add_files -tb test_FLOOD_base.cpp -cflags $defs
 
 # Read the input arguments from the file
 set fp [open $input_file r]
@@ -39,6 +39,9 @@ if {$::env(AUTOPIPELINE) eq "false"} {
 
 # Run High-Level Synthesis (HLS)
 csynth_design
+
+# Run co-simulation (Attention, this might require a long time, you may want to comment it out for development purposes)
+cosim_design -argv "$arg_string" -trace_level none -enable_binary_tv 
 
 exit
 
