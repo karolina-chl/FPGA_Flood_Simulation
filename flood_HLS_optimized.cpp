@@ -62,8 +62,11 @@ void do_compute(struct parameters p, struct results &r) {
             float cloud_x = p.clouds[cloud].x;
             float cloud_y = p.clouds[cloud].y; 
             float radius = p.clouds[cloud].radius;
+            float radius2 = radius*radius; 
             float intensity = p.clouds[cloud].intensity;
             float sqrt_intensity = sqrt(intensity);
+            float rain_scale = p.ex_factor / 1000 / 60;
+            float inv_radius = 1.0f / radius;
 
             // total rain - local variable per cloud 
             int local_total_rain = 0;
@@ -74,8 +77,10 @@ void do_compute(struct parameters p, struct results &r) {
             rainfall_row:
             for (row_pos = row_start; row_pos < row_end; row_pos++) {
                 #pragma HLS loop_tripcount min=0 max=NROWS avg=NROWS
+
                 float y_pos = COORD_MAT2SCEN_Y(row_pos);
                 float dy = y_pos - cloud_y;
+                float dy2 = SQR(dy);
 
                 rainfall_col:
                 for (col_pos = col_start; col_pos < col_end; col_pos++) {
@@ -83,12 +88,15 @@ void do_compute(struct parameters p, struct results &r) {
                     #pragma HLS PIPELINE II=1
                     
                     float x_pos = COORD_MAT2SCEN_X(col_pos);
-                    
-                    distance = sqrt(SQR(x_pos - cloud_x) + SQR(dy));
-                    if (distance < radius) {
+                    float dx = x_pos - cloud_x; 
+                    float distance2 = SQR(dx) + dy2;
+
+                    if (distance2 < radius2) {
+                        distance = sqrt(distance2);
+
                         float rain =
-                            p.ex_factor * MAX(0, intensity - distance / radius * sqrt_intensity);
-                        float meters_per_minute = rain / 1000 / 60;
+                            MAX(0, intensity - distance * inv_radius * sqrt_intensity);
+                        float meters_per_minute = rain * rain_scale;
                         int rain_fixed = FIXED(meters_per_minute);
 
                         accessMat(water_level, row_pos, col_pos) += rain_fixed;
