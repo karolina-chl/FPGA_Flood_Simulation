@@ -63,8 +63,8 @@ for test_name in "${TESTS[@]}"; do
         small*) [[ "$SIZE" == "all" || "$SIZE" == "small" ]] || continue ;;
     esac
 
-    CSIM_DIR="FLOOD_HLS_base_${test_name}/solution_FLOOD_HLS_base/csim/build"
-    RTL_DIR="FLOOD_HLS_base_${test_name}/solution_FLOOD_HLS_base/sim/wrapc_pc"
+    CSIM_DIR="FLOOD_HLS_base_${test_name}/solution_FLOOD_HLS_base_${test_name}/csim/build"
+    RTL_DIR="FLOOD_HLS_base_${test_name}/solution_FLOOD_HLS_base_${test_name}/sim/wrapc_pc"
 
     echo -e "\n========================================"
     echo "Starting: ${test_name} ..."
