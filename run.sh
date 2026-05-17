@@ -31,6 +31,7 @@ while [[ $# -gt 0 ]]; do
         -v|--version) VERSION=$2; shift ;;
         -b|--build-cpu) BUILD_BIN=$2; shift ;;
         -c|--run-cpu) RUN_CPU=$2; shift ;;
+        -h|--help) usage; exit 0 ;;
         *) echo "Error: Unknown flag '$1'"; usage; exit 1 ;;
     esac
     shift
